@@ -1,0 +1,382 @@
+#1 Creating the database
+
+CREATE DATABASE `Book Haven`;
+
+#2 Order table
+
+CREATE TABLE Orders
+( 
+    `Order ID`  CHAR(100) NOT NULL,
+    `Order Date`  DATE NOT NULL,
+    `Delivery Address` VARCHAR(200) NOT NULL,
+    `Delivery Date` DATE,
+    CONSTRAINT od_id_pk PRIMARY KEY(`Order ID`)
+);
+
+#3 Book Item Table
+
+CREATE TABLE `Book Item` 
+( 
+    `Item Code` CHAR(10) NOT NULL, 
+    `Price in $` DECIMAL(8,2) NOT NULL, 
+    `Stock Level` INTEGER(5) NOT NULL, 
+    `Recorder Level` INTEGER(5) NOT NULL, 
+    ISBN CHAR(20) UNIQUE NOT NULL, 
+    Title VARCHAR(200), 
+    Genre VARCHAR(100), 
+    Category VARCHAR(100), 
+    Author VARCHAR(200), 
+    Publisher VARCHAR(200), 
+    `Year of Publication` YEAR(4), 
+    CONSTRAINT it_cd_bk_pk PRIMARY KEY(`Item Code`) 
+);
+
+#4 Stationary Item Table
+
+CREATE TABLE `Stationary Item` 
+( 
+    `Item Code` CHAR(10) NOT NULL, 
+    `Price in $` DECIMAL(8,2) NOT NULL, 
+    `Stock Level` INTEGER(5) NOT NULL, 
+    `Recorder Level` INTEGER(5) NOT NULL, 
+    `Stationary Category` VARCHAR(100),
+    Brand VARCHAR(100),
+    Warrenty INTEGER(2),
+    CONSTRAINT it_cd_stat_pk PRIMARY KEY(`Item Code`) 
+);
+
+#5 User-Supplier Table
+
+CREATE TABLE `User Supplier`
+(
+    `User ID`  CHAR(10) NOT NULL,
+    Name VARCHAR(100) NOT NULL,
+    Address  VARCHAR(200) NOT NULL,
+    ContactNo  CHAR(11) NOT NULL,
+    Email  VARCHAR(150) NOT NULL,
+    `Contact Person`  VARCHAR(50) NOT NULL,
+    `Supplier Type`  CHAR(20) NOT NULL,
+    `Payment Terms` VARCHAR(100),
+    `Delivery Time Lead Days` INTEGER(3),
+    CONSTRAINT us_id_sup_pk PRIMARY KEY(`User ID`)
+);
+
+#6 User-Customer Table
+
+CREATE TABLE `User Customer`
+(
+    `User ID`   CHAR(10) NOT NULL,
+    Name  VARCHAR(100),
+    Address VARCHAR(200) NOT NULL,
+    ContactNo  CHAR(11) NOT NULL,
+    Email  VARCHAR(200) NOT NULL,
+    `Billing Address` VARCHAR(200),
+    `Shipping Address` VARCHAR(200),
+    `Preferred Payment Method` VARCHAR(50) NOT NULL,
+    CONSTRAINT us_id_cus_pk PRIMARY KEY(`User ID`)
+);
+
+#7 Payment-Bank Transfer Table
+
+CREATE TABLE `Payment-Bank Transfer`
+(
+    `Payment ID` CHAR(15) NOT NULL,
+    `Reference Number` CHAR(15) UNIQUE NOT NULL,
+    `Transaction Date` DATE NOT NULL,
+    `Amount in $` DECIMAL(8,2) NOT NULL,
+    `Account Number` CHAR(15) UNIQUE NOT NULL,
+    `Bank Name` CHAR(15) NOT NULL,
+    `Branch Name` VARCHAR(15) NOT NULL,
+    `User ID`   CHAR(10) NOT NULL,
+    CONSTRAINT pay_bnk_tra_pk PRIMARY KEY(`Payment ID`),
+    CONSTRAINT us_id_bnk_tra_fk FOREIGN KEY(`User ID`) REFERENCES `User Customer`(`User ID`)
+);
+
+#8 Payment-Online Table
+
+CREATE TABLE `Payment- Online`
+(
+    `Payment ID` CHAR(15) NOT NULL,
+    `Reference Number` CHAR(15) UNIQUE NOT NULL,
+    `Transaction Date` DATE NOT NULL,
+    `Amount in $` DECIMAL(8,2) NOT NULL,
+    `Payment Gateway` VARCHAR(50),
+    `Confirmation number` VARCHAR(15),
+    `User ID`   CHAR(10) NOT NULL,
+    CONSTRAINT pay_onl_pk PRIMARY KEY(`Payment ID`),
+    CONSTRAINT us_id_onl_tra_fk FOREIGN KEY(`User ID`) REFERENCES `User Customer`(`User ID`)
+);
+    
+#9 Book Item Supplier Table
+
+CREATE TABLE `Book Item Supplier`
+(
+    `Item Code` CHAR(10) NOT NULL,
+    `User ID`   CHAR(10) NOT NULL,
+    `Book Supply Date` DATE,
+    CONSTRAINT it_cd_bk_fk FOREIGN KEY(`Item Code`) REFERENCES `Book Item`(`Item Code`),
+    CONSTRAINT us_id_sup_bk_fk FOREIGN KEY(`User ID`) REFERENCES `User Supplier`(`User ID`),
+    CONSTRAINT bk_itm_sup_pk PRIMARY KEY(`Item Code`,`User ID`,`Book Supply Date`)
+);
+
+#10 Stationary Item Supplier Table
+
+CREATE TABLE `Stationary Item Supplier`
+(
+    `Item Code` CHAR(10) NOT NULL,
+    `User ID`   CHAR(10) NOT NULL,
+    `Stationary Supply Date` DATE,
+    CONSTRAINT it_cd_stat_fk FOREIGN KEY(`Item Code`) REFERENCES `Stationary Item`(`Item Code`),
+    CONSTRAINT us_id_sup_stat_fk FOREIGN KEY(`User ID`) REFERENCES `User Supplier`(`User ID`),
+    CONSTRAINT stat_itm_sup_pk PRIMARY KEY(`Item Code`,`User ID`,`Stationary Supply Date`)
+);
+
+#11 User-Customer_Order Table
+
+CREATE TABLE `User-Customer Order`
+(
+    `User ID`   CHAR(10) NOT NULL,
+    `Order ID`  CHAR(100) NOT NULL,
+    CONSTRAINT us_id_cus_fk FOREIGN KEY(`User ID`) REFERENCES `User Customer`(`User ID`),
+    CONSTRAINT us_cus_od_id_fk FOREIGN KEY(`Order ID`) REFERENCES `Orders`(`Order ID`),
+    CONSTRAINT us_cus_od_pk PRIMARY KEY(`User ID`,`Order ID`)
+);
+
+#12 Order-Pay-BankTransfer Table
+
+CREATE TABLE `Order-Pay-BankTransfer`
+(
+   `Payment ID` CHAR(15) NOT NULL,
+   `Order ID`  CHAR(100) NOT NULL,
+   CONSTRAINT od_pay_bnk_tra_fk FOREIGN KEY(`Payment ID`) REFERENCES `Payment-Bank Transfer`(`Payment ID`),
+   CONSTRAINT od_id_pay_bnk_tra_fk FOREIGN KEY(`Order ID`) REFERENCES `Orders`(`Order ID`),
+   CONSTRAINT od_pay_bnk_tra_pk PRIMARY KEY(`Payment ID`,`Order ID`)
+);
+
+#13 Order-Pay-Online Payment Table
+
+CREATE TABLE `Order-Pay-Online Payment`
+(
+   `Payment ID` CHAR(15) NOT NULL,
+   `Order ID`  CHAR(100) NOT NULL,
+   CONSTRAINT od_pay_onl_fk FOREIGN KEY(`Payment ID`) REFERENCES `Payment- Online`(`Payment ID`),
+   CONSTRAINT od_id_pay_onl_fk FOREIGN KEY(`Order ID`) REFERENCES `Orders`(`Order ID`),
+   CONSTRAINT od_pay_onl_pk PRIMARY KEY(`Payment ID`,`Order ID`)
+);
+
+#14 Order-Book Item Table
+
+CREATE TABLE `Order-Book Item`
+(
+   `Item Code` CHAR(10) NOT NULL,
+   `Order ID`  CHAR(100) NOT NULL,
+   `Item Quantities` INTEGER(5),
+   CONSTRAINT od_it_cd_bk_fk FOREIGN KEY(`Item Code`) REFERENCES `Book Item`(`Item Code`),
+   CONSTRAINT od_id_bk_fk FOREIGN KEY(`Order ID`) REFERENCES `Orders`(`Order ID`),
+   CONSTRAINT od_bk_itm_pk PRIMARY KEY(`Item Code`,`Order ID`,`Item Quantities`)
+);
+
+#15 Order-Stationary Item Table
+
+CREATE TABLE `Order-Stationary Item`
+(
+   `Item Code` CHAR(10) NOT NULL,
+   `Order ID`  CHAR(100) NOT NULL,
+   `Item Quantities` INTEGER(5),
+   CONSTRAINT od_it_cd_stat_fk FOREIGN KEY(`Item Code`) REFERENCES `Stationary Item`(`Item Code`),
+   CONSTRAINT od_id_stat_fk FOREIGN KEY(`Order ID`) REFERENCES `Orders`(`Order ID`),
+   CONSTRAINT od_stat_itm_pk PRIMARY KEY(`Item Code`,`Order ID`,`Item Quantities`)
+);
+
+
+
+
+
+
+
+#1 Inserting data into Order table
+
+INSERT INTO `Orders` (`Order Id`, `Order Date`, `Delivery Date`, `Delivery Address`)
+VALUES
+  ('ORD001', '2023-11-25', '2023-12-01', '778 Main Street, California'),
+  ('ORD002', '2023-11-26', '2023-12-02', '969 Shopping Mall, Shop 23, WashingtonDC'),
+  ('ORD003', '2023-11-27', '2023-12-03', '789 Maple Lane, North Carolina'),
+  ('ORD004', '2023-11-28', '2023-12-04', '223 Pine Road, Lowa'),
+  ('ORD005', '2023-11-29', '2023-12-05', '456 Cedar Street, Florida'),
+  ('ORD006', '2023-11-27', '2023-12-03', '469 Second Street, Lowa'),
+  ('ORD007', '2023-11-28', '2023-12-04', '232 Flower Road, WashingtonDC'),
+  ('ORD008', '2023-11-30', '2023-12-07', '91 Tree Lane, Florida'),
+  ('ORD009', '2023-12-01', '2023-12-09', '293 Base Road, California'),
+  ('ORD010', '2023-12-02', '2023-12-10', '47 Cedar Street, North Carolina');
+
+#2 Inserting data into Book Item table
+
+INSERT INTO `Book Item` (`Item Code`, `Price in $`, `Stock Level`, `Recorder Level`, ISBN, Title, Genre, Category, Author, Publisher,`Year Of Publication`)
+VALUES
+  ('B001', 19.99, 100, 20, '978-0-13-516630-1', 'The Great Gatsby', 'Fiction', 'Classic', 'F. Scott Fitzgerald', 'Scribner', 1925),
+  ('B002', 29.99, 75, 15, '978-0-7475-3269-6', 'Harry Potter and the Philosopher\'s Stone', 'Fantasy', 'Young Adult', 'J.K. Rowling', 'Bloomsbury', 1997),
+  ('B003', 24.99, 50, 10, '978-0-14-118776-0', 'To Kill a Mockingbird', 'Fiction', 'Classic', 'Harper Lee', 'Penguin', 1960),
+  ('B004', 14.99, 120, 30, '978-0-345-45349-4', '1984', 'Dystopian', 'Science Fiction', 'George Orwell', 'Signet', 1949),
+  ('B005', 39.99, 90, 18, '978-1-250-19657-5', 'The Catcher in the Rye', 'Fiction', 'Coming-of-Age', 'J.D. Salinger', 'Little, Brown', 1951),
+  ('B006', 170.66, 10, 5, '978-0-13-397077-7', 'Fundamentals of Database Systems', 'Non-Fiction', 'Database Management', 'Ramez Elmasri', 'Pearson', 2016),
+  ('B007', 170.66, 8, 3, '978-0-13-397077-6', 'Fundamentals of Database Systems', 'Non-Fiction', 'Database Management', 'Ramez Elmasri', 'Springer', 2016),
+  ('B008', 170.66, 5, 3, '978-0-13-397077-8', 'Fundamentals of Database Systems', 'Non-Fiction', 'Database Management', 'Ramez Elmasri', 'Atlas', 2016);
+
+#3 Inserting data into Stationary Item table
+
+INSERT INTO `Stationary Item` (`Item Code`, `Price in $`, `Stock Level`, `Recorder Level`, `Stationary Category`, Brand, Warrenty)
+VALUES
+  ('St001', 4.99, 200, 50, 'Notebooks', 'Moleskine', 0),
+  ('St002', 2.49, 300, 75, 'Pens', 'Pilot', 1),
+  ('St003', 9.99, 100, 25, 'Desk Accessories', 'IKEA', 0),
+  ('St004', 1.99, 500, 100, 'Staplers', 'Bostitch', 1),
+  ('St005', 6.99, 150, 30, 'Markers', 'Sharpie', 0);
+
+#4 Inserting data into User Supplier table
+
+INSERT INTO `User Supplier` (`User ID`, Name, Address, ContactNo, Email, `Contact Person`, `Supplier Type`, `Payment Terms`, `Delivery Time Lead Days`)
+VALUES
+  ('S001', 'John Doe Supplies', '123 Main Street, Cityville', '071-1234567', 'john.doe@gmail.com', 'John Doe', 'Company', 'Net 30', 7),
+  ('S002', 'Jane Smith Stationers', '456 Oak Avenue, Townsville', '077-2345678', 'jane.smith@gmail.com', 'Jane Smith', 'Company', 'Net 45', 10),
+  ('S003', 'Tom Holland', '789 Pine Lane, Villagetown', '070-3456789', 'htom96854@gmail.com', 'Tom Holland', 'Individual', 'Cash on Delivery', 5),
+  ('S004', 'Company Supplies Ltd.', '101 Cedar Road, Hamletville', '077-9874563', 'company.supplies@yahoo.com', 'Company Supplies manager', 'Company', 'Net 60', 15),
+  ('S005', 'SmallBiz Suppliers', '202 Maple Street, Hamletville', '071-5997864', 'smallbiz@yahoo.com', 'SmallBiz manager', 'Company', 'Net 15', 3);
+
+#5 Inserting data into User Customer table
+
+INSERT INTO `User Customer` (`User ID`, Name, Address, ContactNo, Email, `Billing Address`, `Shipping Address`, `Preferred Payment Method`)
+VALUES
+  ('C001', 'Dwayne Johnson', '123 Main Street, Florida', '071-8956471', 'johnsondwayne@gmail.com', '123 Main Street, Florida', '123 Main Street, Florida', 'Bank Transfer'),
+  ('C002', 'Steve Jobs', '456 Flower Avenue, Lowa', '077-2563147', 'steve123@gmail.com', '456 Flower Avenue, Lowa', '456 Flower Avenue, Lowa', 'Online Payment'),
+  ('C003', 'Mark Zuckerberg', '789 Pine Lane, Arizona', '070-8971235', 'zuckM45@gmail.com', '789 Pine Lane, Arizona', '789 Pine Lane, Villagetown, New Jersey', 'Bank Transfer'),
+  ('C004', 'David Warner', '101 Cedar Road, New Jersey', '072-9517532', 'WarnerD89@yahoo.com', '1 Corporate Plaza, Business City, New York', '101 Cedar Road, New Jersey', 'Online Payment'),
+  ('C005', 'Virat Kholi', '202 Maple Street, Alabama', '071-4215896', 'Kholikuttu69@yahoo.com', '123 Commerce Street, Commercial District, Washington', '555 Education Lane, Classroom 301, Academic Area, California', 'Bank Transfer');
+
+#6 Inserting data into Payment-Bank Transfer table
+
+INSERT INTO `Payment-Bank Transfer` (`Payment ID`, `Reference Number`, `Transaction Date`, `Amount in $`, `Account Number`, `Bank Name`, `Branch Name`, `User ID`)
+VALUES
+  ('BTPAY001', 'REF123456', '2023-11-25', 500.00, 'ACC123456', 'Bank of America', 'Main Branch', 'C001'),
+  ('BTPAY002', 'REF789012', '2023-11-26', 750.50, 'ACC789012', 'ABC Bank', 'City Branch', 'C005'),
+  ('BTPAY003', 'REF345678', '2023-11-27', 1000.75, 'ACC345678', 'XYZ Bank', 'Suburb Branch', 'C003'),
+  ('BTPAY004', 'REF901234', '2023-11-28', 300.25, 'ACC901234', 'Bank One', 'Downtown Branch', 'C004'),
+  ('BTPAY005', 'REF567890', '2023-11-29', 150.99, 'ACC567890', 'City Bank', 'Central Branch', 'C002');
+
+#7 Inserting data into Payment-Online table
+
+INSERT INTO `Payment- Online`(`Payment ID`, `Reference Number`, `Transaction Date`, `Amount in $`, `Payment Gateway`, `Confirmation number`, `User ID`)
+VALUES
+  ('ONPAY001', 'REF234176', '2023-11-25', 500.00, 'PayPal', 'CONF123', 'C001'),
+  ('ONPAY002', 'REF781652', '2023-11-26', 800.50, 'Stripe', 'CONF456', 'C003'),
+  ('ONPAY003', 'REF954678', '2023-11-27', 1200.75, 'Square', 'CONF789', 'C004'),
+  ('ONPAY004', 'REF901378', '2023-11-28', 3050.25, 'Paytm', 'CONF012', 'C002'),
+  ('ONPAY005', 'REF549370', '2023-11-29', 260.99, 'Braintree', 'CONF345', 'C005');
+
+#8 Inserting data into Book Item Supplier Table
+
+INSERT INTO `Book Item Supplier`(`Item Code`,`User ID`,`Book Supply Date`)
+VALUES
+  ('B005','S002','2023-09-25'),
+  ('B003','S001','2023-03-11'),
+  ('B004','S003','2023-05-19'),
+  ('B002','S005','2022-11-23'),
+  ('B001','S004','2023-08-05');
+
+#9 Inserting data into Stationary Item Supplier Table
+
+INSERT INTO `Stationary Item Supplier`(`Item Code`,`User ID`,`Stationary Supply Date`) 
+VALUES
+  ('St004','S003','2023-09-08'),
+  ('St005','S002','2022-12-24'),
+  ('St001','S004','2022-11-25'),
+  ('St003','S001','2023-04-08'),
+  ('St002','S005','2023-09-21');
+
+#10 Inserting data into User-Customer_Order Table
+
+INSERT INTO `User-Customer Order`(`User ID`,`Order ID`)
+VALUES
+  ('C002','ORD001'),
+  ('C001','ORD005'),
+  ('C005','ORD004'),
+  ('C004','ORD002'),
+  ('C003','ORD003'),
+  ('C002','ORD006'),
+  ('C002','ORD007'),
+  ('C003','ORD008'),
+  ('C003','ORD009'),
+  ('C003','ORD010');
+
+#11 Inserting data into Order-Pay-BankTransfer Table
+
+INSERT INTO `Order-Pay-BankTransfer`(`Payment ID`,`Order ID`)
+VALUES
+  ('BTPAY002','ORD005'),
+  ('BTPAY004','ORD001'),
+  ('BTPAY001','ORD002'),
+  ('BTPAY005','ORD003'),
+  ('BTPAY003','ORD004');
+
+#12 Inserting data into Order-Pay-Online Payment Table
+
+INSERT INTO `Order-Pay-Online Payment`(`Payment ID`,`Order ID`)
+VALUES
+  ('ONPAY005','ORD002'),
+  ('ONPAY004','ORD005'),
+  ('ONPAY002','ORD004'),
+  ('ONPAY003','ORD003'),
+  ('ONPAY001','ORD001');
+
+#13 Inserting data into Order-Book Item Table
+
+INSERT INTO `Order-Book Item`(`Item Code`,`Order ID`,`Item Quantities`)
+VALUES
+  ('B001','ORD003',1),
+  ('B005','ORD002',1),
+  ('B004','ORD005',2),
+  ('B003','ORD001',1),
+  ('B002','ORD004',2);
+
+#14 Inserting data into Order-Stationary Item Table
+
+INSERT INTO `Order-Stationary Item`(`Item Code`,`Order ID`,`Item Quantities`)
+VALUES
+  ('St002','ORD004',10),
+  ('St001','ORD002',5),
+  ('St003','ORD001',8),
+  ('St004','ORD003',4),
+  ('St005','ORD005',7);
+
+
+
+
+
+
+#Q(a)
+
+SELECT ISBN, Title, Category, Author
+FROM `book item`
+WHERE Category = 'Database Management'
+      AND (Publisher = 'Pearson' OR Publisher = 'Springer')
+      OR Author = 'Ramez Elmasri'
+
+#Q(b)
+
+SELECT
+    uc.Name AS `Customer Name`,
+    uc.ContactNo AS `Phone Number`,
+    uc.Address,
+    uc.Email,
+    COUNT(uco.`Order ID`) AS `Number of Orders Placed`
+FROM
+    `User Customer` uc
+JOIN
+    `User-Customer Order` uco ON uc.`User ID` = uco.`User ID`
+JOIN
+    `Orders` o ON uco.`Order ID` = o.`Order ID`
+WHERE
+    o.`Order Date` > DATE_SUB(CURRENT_DATE, INTERVAL 6 MONTH)
+GROUP BY
+    uc.Name, uc.ContactNo, uc.Address, uc.Email
+HAVING
+    COUNT(DISTINCT uco.`Order ID`) >2;
